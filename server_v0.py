@@ -55,6 +55,7 @@ class WorkerManager:
         with self.lock:
             idle_workers = [w for w in self.workers.items() if w[1]['status'] == 'idle']
             if idle_workers:
+                #Put algorithm logic for choosing worker here
                 return min(idle_workers, key=lambda x: x[1]['cpu_usage'])[0]
         return None
 
@@ -64,6 +65,7 @@ class WorkerManager:
             worker = self.workers[worker_id]
             worker['connection'].send(json.dumps(('run_job', [job], {})))
             worker['status'] = 'busy'
+            print('Assigned job', job, 'to worker', worker_id)
             return True
         return False
 
@@ -75,12 +77,14 @@ class WorkerManager:
                     worker['connection'].send(json.dumps(('get_status', [], {})))
                     status, cpu_usage, job_progress = json.loads(worker['connection'].recv())
                     self.update_worker_status(worker_id, status, cpu_usage, job_progress)
+                    print(f'Worker {worker_id}: {status}, CPU: {cpu_usage}%, Progress: {job_progress}%')
 
     def load_balancer(self):
         while True:
             if self.job_queue:
                 job = heapq.heappop(self.job_queue)
                 if not self.assign_job(job):
+                    print(f'No available workers, putting job {job} back in queue')
                     heapq.heappush(self.job_queue, job)
             time.sleep(1)
 
