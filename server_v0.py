@@ -63,21 +63,45 @@ class WorkerManager:
         worker_id = self.get_idle_worker()
         if worker_id:
             worker = self.workers[worker_id]
-            worker['connection'].send(json.dumps(('run_job', [job], {})))
-            worker['status'] = 'busy'
-            print('Assigned job', job, 'to worker', worker_id, flush=True)
-            return True
+            try:
+                worker['connection'].send(json.dumps(('run_job', [job], {})))
+                worker['status'] = 'busy'
+                print('Assigned job', job, 'to worker', worker_id, flush=True)
+                return True
+            except (EOFError, ConnectionError) as e:
+                print(f"Failed to assign job {job} to worker {worker_id}: {e}")
+                self.remove_worker(worker_id)
         return False
 
     def monitor_workers(self):
         while True:
             time.sleep(5)
             with self.lock:
-                for worker_id, worker in self.workers.items():
-                    worker['connection'].send(json.dumps(('get_status', [], {})))
-                    status, cpu_usage, job_progress = json.loads(worker['connection'].recv())
-                    self.update_worker_status(worker_id, status, cpu_usage, job_progress)
-                    print(f'Worker {worker_id}: {status}, CPU: {cpu_usage}%, Progress: {job_progress}%')
+                for worker_id, worker in list(self.workers.items()):
+                    try:
+                        # Send the status request to the worker
+                        worker['connection'].send(json.dumps(('get_status', [], {})))
+                        # Receive the response
+                        response = worker['connection'].recv()
+                        print(f"Raw response from worker {worker_id}: {response}", flush=True)  # Debug print
+
+                        # Try to parse the response
+                        try:
+                            status, cpu_usage, job_progress = json.loads(response)
+                        except (json.JSONDecodeError, ValueError) as e:
+                            print(f"Error decoding response from worker {worker_id}: {e}", flush=True)
+                            self.remove_worker(worker_id)
+                            continue
+
+                        # Update worker status if parsing is successful
+                        self.update_worker_status(worker_id, status, cpu_usage, job_progress)
+                        print(f'Worker {worker_id}: {status}, CPU: {cpu_usage}%, Progress: {job_progress}%', flush=True)
+
+                    except (EOFError, ConnectionError) as e:
+                        print(f"Worker {worker_id} disconnected or failed: {e}", flush=True)
+                        self.remove_worker(worker_id)
+
+
 
     def load_balancer(self):
         while True:
