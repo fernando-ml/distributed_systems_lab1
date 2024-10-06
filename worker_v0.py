@@ -62,6 +62,7 @@ def main():
                 # Handle the received command
                 if func_name == 'get_status':
                     result = worker.get_status()
+                    print('Get status:', result)
                 elif func_name == 'run_job':
                     worker.run_job(args[0])
                     result = "Job completed"
