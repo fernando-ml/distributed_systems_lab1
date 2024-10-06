@@ -15,14 +15,23 @@ class RPCHandler:
     def handle_connection(self, connection):
         try:
             while True:
-                func_name, args, kwargs = json.loads(connection.recv())
                 try:
-                    r = self._functions[func_name](*args, **kwargs)
-                    connection.send(json.dumps(r))
-                except Exception as e:
-                    connection.send(json.dumps(str(e)))
-        except EOFError:
-            pass
+                    data = connection.recv()
+                    func_name, args, kwargs = json.loads(data)
+                    # Ensure the received data is valid
+                    if func_name in self._functions:
+                        r = self._functions[func_name](*args, **kwargs)
+                        connection.send(json.dumps(r))
+                    else:
+                        connection.send(json.dumps(f"Unknown function: {func_name}"))
+                except (EOFError, ConnectionError) as e:
+                    print(f"Worker disconnected or communication error: {e}")
+                    break
+                except json.JSONDecodeError as e:
+                    print(f"Invalid data received from worker: {e}")
+                    connection.send(json.dumps("Error: Invalid data format"))
+        except Exception as e:
+            print(f"Unexpected error in handling connection: {e}")
 
 class WorkerManager:
     def __init__(self):
@@ -108,7 +117,7 @@ class WorkerManager:
             if self.job_queue:
                 job = heapq.heappop(self.job_queue)
                 if not self.assign_job(job):
-                    print(f'No available workers, putting job {job} back in queue')
+                    # print(f'No available workers, putting job {job} back in queue')
                     heapq.heappush(self.job_queue, job)
             time.sleep(1)
 
