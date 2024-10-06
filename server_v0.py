@@ -65,7 +65,7 @@ class WorkerManager:
             worker = self.workers[worker_id]
             worker['connection'].send(json.dumps(('run_job', [job], {})))
             worker['status'] = 'busy'
-            print('Assigned job', job, 'to worker', worker_id)
+            print('Assigned job', job, 'to worker', worker_id, flush=True)
             return True
         return False
 
@@ -99,6 +99,12 @@ def rpc_server(handler, address, authkey):
     load_balancer_thread = Thread(target=worker_manager.load_balancer)
     load_balancer_thread.daemon = True
     load_balancer_thread.start()
+    
+    # Adding 20 jobs to the queue
+    for i in range(20):
+        job = f"Job-{i+1}"
+        heapq.heappush(worker_manager.job_queue, job)
+        print(f"Added {job} to the job queue.")
 
     worker_id = 0
     while True:
