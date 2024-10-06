@@ -15,7 +15,7 @@ def calculate_pi_leibniz(worker):
         pi_approx += ((-1) ** i) / (2 * i + 1)  # Calculate the approximation
         
         # Update job progress every 1% of the total terms
-        if (i + 1) % (n_terms // 100) == 0:
+        if (i + 1) % (n_terms // 10) == 0:
             worker.job_progress = (i + 1) / n_terms * 100
             print(f"Progress: {worker.job_progress:.2f}%")  # Print progress for monitoring
     

@@ -17,13 +17,16 @@ class RPCHandler:
             while True:
                 try:
                     data = connection.recv()
-                    func_name, args, kwargs = json.loads(data)
-                    # Ensure the received data is valid
-                    if func_name in self._functions:
-                        r = self._functions[func_name](*args, **kwargs)
-                        connection.send(json.dumps(r))
-                    else:
-                        connection.send(json.dumps(f"Unknown function: {func_name}"))
+                    if len(data) == 3:
+                        func_name, args, kwargs = json.loads(data)
+                        # Ensure the received data is valid
+                        if func_name in self._functions:
+                            r = self._functions[func_name](*args, **kwargs)
+                            connection.send(json.dumps(r))
+                        else:
+                            connection.send(json.dumps(f"Unknown function: {func_name}"))
+                    elif len(data) == 1:
+                        print(data)
                 except (EOFError, ConnectionError) as e:
                     print(f"Worker disconnected or communication error: {e}")
                     break
@@ -65,6 +68,7 @@ class WorkerManager:
             idle_workers = [w for w in self.workers.items() if w[1]['status'] == 'idle']
             if idle_workers:
                 #Put algorithm logic for choosing worker here
+                print(idle_workers)
                 return min(idle_workers, key=lambda x: x[1]['cpu_usage'])[0]
         return None
 
@@ -88,27 +92,23 @@ class WorkerManager:
             with self.lock:
                 for worker_id, worker in list(self.workers.items()):
                     try:
-                        # Send the status request to the worker
                         worker['connection'].send(json.dumps(('get_status', [], {})))
-                        # Receive the response
                         response = worker['connection'].recv()
-                        print(f"Raw response from worker {worker_id}: {response}", flush=True)  # Debug print
+                        print(response)
 
-                        # Try to parse the response
-                        try:
+                        # Check if the response indicates job completion or status update
+                        if isinstance(response, str) and response == "Job completed":
+                            worker['status'] = 'idle'
+                            print(f"Worker {worker_id} has completed the job and is now idle.", flush=True)
+                        else:
                             status, cpu_usage, job_progress = json.loads(response)
-                        except (json.JSONDecodeError, ValueError) as e:
-                            print(f"Error decoding response from worker {worker_id}: {e}", flush=True)
-                            self.remove_worker(worker_id)
-                            continue
-
-                        # Update worker status if parsing is successful
-                        self.update_worker_status(worker_id, status, cpu_usage, job_progress)
-                        print(f'Worker {worker_id}: {status}, CPU: {cpu_usage}%, Progress: {job_progress}%', flush=True)
+                            self.update_worker_status(worker_id, status, cpu_usage, job_progress)
+                            print(f'Worker {worker_id}: {status}, CPU: {cpu_usage}%, Progress: {job_progress}%', flush=True)
 
                     except (EOFError, ConnectionError) as e:
                         print(f"Worker {worker_id} disconnected or failed: {e}", flush=True)
                         self.remove_worker(worker_id)
+
 
 
 
@@ -154,4 +154,4 @@ handler.register_function(lambda x, y: x + y)  # Simple add function for testing
 
 # Run the server
 if __name__ == '__main__':
-    rpc_server(handler, ('10.128.0.2', 17000), authkey=b'peekaboo')
+    rpc_server(handler, ('10.188.0.2', 17000), authkey=b'peekaboo')

@@ -31,14 +31,17 @@ class Worker:
         except Exception as e:
             cpu_usage = 0.0  # Default if there's an issue getting CPU status
             print(f"Error getting CPU status: {e}")
+        
+        
+        
         return self.status, cpu_usage, self.job_progress
 
     def run_job(self, job_id):
         self.status = 'busy'
         self.job_progress = 0
-        
+
         print(f"Starting job {job_id}")
-        
+
         try:
             pi_value = calculate_pi_leibniz(self)
             self.job_progress = 100  # Ensure progress is set to 100 upon completion
@@ -47,10 +50,15 @@ class Worker:
             print(f"Error during job {job_id}: {e}")
         finally:
             self.status = 'idle'
+            # Inform the manager that the job is completed and the worker is now idle
+            completion_message = ("job_completed", job_id)
+            return completion_message
+            
+
 
 def main():
     try:
-        connection = Client(('10.128.0.2', 17000), authkey=b'peekaboo')
+        connection = Client(('10.188.0.2', 17000), authkey=b'peekaboo')
         worker = Worker(connection)
 
         while True:
@@ -64,8 +72,7 @@ def main():
                     result = worker.get_status()
                     print('Get status:', result)
                 elif func_name == 'run_job':
-                    worker.run_job(args[0])
-                    result = "Job completed"
+                    result = worker.run_job(args[0])
                 else:
                     result = f"Unknown function: {func_name}"
                     print(f"Received unknown function: {func_name}")
