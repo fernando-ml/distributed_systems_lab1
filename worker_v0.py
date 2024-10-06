@@ -30,11 +30,9 @@ class Worker:
         self.status = 'busy'
         self.job_progress = 0
         
-        def update_progress(progress):
-            self.job_progress = progress
+        print(f"Starting job {job_id}")
         
-        pi_value, progress = calculate_pi_leibniz()
-        update_progress(progress)
+        pi_value = calculate_pi_leibniz(self.job_progress)
         
         self.status = 'idle'
         print(f"Job {job_id} completed")
