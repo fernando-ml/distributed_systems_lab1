@@ -3,7 +3,7 @@ import json
 import time
 from multiprocessing.connection import Client
 from monitor_lib import get_cpu_status
-from dl_task import train_model
+from pi_calculation import calculate_pi_leibniz
 
 class RPCProxy:
     def __init__(self, connection):
@@ -33,10 +33,10 @@ class Worker:
         def update_progress(progress):
             self.job_progress = progress
         
-        train_model(job_id, update_progress)
+        pi_value, progress = calculate_pi_leibniz()
+        update_progress(progress)
         
         self.status = 'idle'
-        self.job_progress = 1
         print(f"Job {job_id} completed")
 
 def main():
