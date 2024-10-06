@@ -154,4 +154,4 @@ handler.register_function(lambda x, y: x + y)  # Simple add function for testing
 
 # Run the server
 if __name__ == '__main__':
-    rpc_server(handler, ('localhost', 17000), authkey=b'peekaboo')
+    rpc_server(handler, ('10.128.0.2', 17000), authkey=b'peekaboo')
