@@ -1,53 +1,80 @@
 import json
+import time
+import uuid  # For generating unique client IDs
 from multiprocessing.connection import Listener
 from threading import Thread
-import random
-import time
+from pi_calculation import calculate_pi_leibniz
 
 class RPCHandler:
     def __init__(self):
         self._functions = { }
+        self.clients = {}  # Store client connections with their unique IDs
 
     def register_function(self, func):
         self._functions[func.__name__] = func
 
-    def handle_connection(self, connection):
+    def handle_connection(self, connection, client_id):
+
         try:
             while True:
-                # Receive a message
+                # Receive a message from the client
                 func_name, args, kwargs = json.loads(connection.recv())
+                
                 # Run the RPC and send a response
                 try:
-                    r = self._functions[func_name](*args,**kwargs)
-                    print(f"Function '{func_name}' called with args={args}, kwargs={kwargs}, result={r}")
+                    r = self._functions[func_name](*args, **kwargs)
+                    print(f"Client {client_id} called function '{func_name}' with args={args}, kwargs={kwargs}, result={r}")
                     connection.send(json.dumps(r))
                 except Exception as e:
                     connection.send(json.dumps(str(e)))
         except EOFError:
-             pass
+            print(f"Client {client_id} disconnected")
+            self.clients.pop(client_id, None)  # Remove the client from the list
+
+
+    def request_cpu_usage(self, connection, client_id):
+        """Send periodic request to the client to get CPU usage every 5 seconds."""
+        try:
+            while True:
+                # Send a request to the client to get CPU usage
+                connection.send(json.dumps({"action": "get_cpu_usage"}))
+                
+                # Receive the CPU usage from the client
+                response = json.loads(connection.recv())
+                print(f"Received CPU usage from Client {client_id}: {response['cpu_usage']}%")
+                
+                # Wait 5 seconds before asking again
+                time.sleep(5)
+        except EOFError:
+            print(f"Client {client_id} disconnected from CPU reporting")
+            self.clients.pop(client_id, None)  # Remove the client from the list
 
 def rpc_server(handler, address, authkey):
     sock = Listener(address, authkey=authkey)
+    print("Server is running...")
     while True:
         client = sock.accept()
-        # Multiple threading
-        t = Thread(target=handler.handle_connection, args=(client,))
+        
+        # Generate a unique ID for the new client
+        client_id = str(uuid.uuid4())
+        print(f"New client connected with ID: {client_id}")
+        handler.clients[client_id] = client
+        
+        # Handle client requests in one thread
+        t = Thread(target=handler.handle_connection, args=(client, client_id))
         t.daemon = True
         t.start()
 
-# Some remote functions
-def add(x, y):
-    return x + y
-
-def sub(x, y):
-    return x - y
+        # Periodically request CPU usage from the client in another thread
+        t2 = Thread(target=handler.request_cpu_usage, args=(client, client_id))
+        t2.daemon = True
+        t2.start()
 
 # Register with a handler
 handler = RPCHandler()
 # Register function
 # has to register
-handler.register_function(add)
-handler.register_function(sub)
+handler.register_function(calculate_pi_leibniz)
 
 # Run the server
 rpc_server(handler, ('localhost', 17000), authkey=b'peekaboo')
