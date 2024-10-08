@@ -41,4 +41,3 @@ def get_memory_status(path='/proc/meminfo'):
             mem_dic[name] = float(data)
 
     return mem_dic
-print(get_cpu_status())
