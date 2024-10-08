@@ -1,74 +1,53 @@
 import json
-import psutil
-import threading
-import time
+from threading import Thread
 from multiprocessing.connection import Client
-from pi_calculation import calculate_pi_leibniz_chunked
+from monitor_lib import get_cpu_status
+from pi_calculation import calculate_pi_leibniz
+import time
 
 class Worker:
-    def __init__(self, connection):
-        self._connection = connection
-        self.keep_running = True  # Control flag to keep threads running
+    def __init__(self, address, authkey):
+        self.connection = Client(address, authkey=authkey)
+        self.job_progress = 0
+        self.calculating_pi = False
 
-    def __getattr__(self, name):
-        def do_rpc(*args, **kwargs):
-            self._connection.send(json.dumps((name, args, kwargs)))
-            result = json.loads(self._connection.recv())
-            return result
-        return do_rpc
+    def send_cpu_status(self):
+        cpu_status = get_cpu_status()
+        self.connection.send(json.dumps(('cpu_status', [cpu_status], {})))
 
-    def listen_for_requests(self):
-        """Continuously listens for requests from the server and responds."""
+    def handle_server_messages(self):
         try:
-            while self.keep_running:
-                request = json.loads(self._connection.recv())
-                if request["action"] == "get_cpu_usage":
-                    # Get the CPU usage
-                    cpu_usage = psutil.cpu_percent(interval=1)
-                    print(f"Reporting CPU usage: {cpu_usage}%")
-                    self._connection.send(json.dumps({"cpu_usage": cpu_usage}))
+            while True:
+                msg = self.connection.recv()
+                func_name, args, kwargs = json.loads(msg)
+                if func_name == 'get_cpu_status':
+                    self.send_cpu_status()
+                elif func_name == 'calculate_pi':
+                    if not self.calculating_pi:
+                        t = Thread(target=self.calculate_pi)
+                        t.daemon = True
+                        t.start()
+                    else:
+                        print("Already calculating π.")
+                else:
+                    print(f"Unknown function {func_name}")
         except EOFError:
-            print("Connection closed by the server")
-            self.keep_running = False
+            print("Disconnected from server.")
+            pass
 
-    # def calculate_pi(self):
-    #     """Calculate Pi in chunks and report intermediate progress to the server."""
-    #     try:
-    #         n_terms = 50_000_000  # Randomly selected or preset for testing
-    #         chunk_size = 5_000_000  # Adjust chunk size based on desired granularity
-    #         pi_approx = 0
+    def calculate_pi(self):
+        self.calculating_pi = True
+        result = calculate_pi_leibniz()
+        self.connection.send(json.dumps(('pi_result', [result], {})))
+        self.calculating_pi = False
 
-    #         for pi_partial in calculate_pi_leibniz_chunked(n_terms, chunk_size):
-    #             pi_approx = pi_partial
-    #             print(f"Intermediate Pi result: {4 * pi_approx}")
-    #             self._connection.send(json.dumps({"intermediate_pi": 4 * pi_approx}))
+if __name__ == '__main__':
+    worker = Worker(('10.128.0.2', 17000), authkey=b'peekaboo')
 
-    #         # Send final result of Pi
-    #         final_result = 4 * pi_approx
-    #         self._connection.send(json.dumps({"final_pi": final_result}))
-    #         print(f"Final Pi result: {final_result}")
+    
+    t = Thread(target=worker.handle_server_messages) #  thread to handle messages from the server
+    t.daemon = True
+    t.start()
 
-    #     except EOFError:
-    #         print("Connection closed during Pi calculation")
-    #         self.keep_running = False
-
-# Connect to the server
-c = Client(('localhost', 17000), authkey=b'peekaboo')
-worker = Worker(c)
-
-# CPU reporting thread
-cpu_thread = threading.Thread(target=worker.listen_for_requests)
-cpu_thread.daemon = True  # This will stop the thread when the program exits
-cpu_thread.start()
-
-# Run the Pi calculation in the main thread, but in chunks
-# pi_thread = threading.Thread(target=worker.calculate_pi)
-# pi_thread.daemon = True
-# pi_thread.start()
-
-# Keep the program running
-# pi_thread.join()  # Wait for Pi calculation to complete
-# worker.keep_running = False  # Stop the CPU thread when calculation is done
-cpu_thread.join()
-
-# c.close()  # Close the connection when done
+    while True: # to keep the main thread running
+        time.sleep(1)
