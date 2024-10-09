@@ -9,22 +9,22 @@ class Worker:
     def __init__(self, address, authkey):
         self.connection = Client(address, authkey=authkey)
         self.job_progress = 0
-        self.calculating_pi = False
+        self.calculating_pi = False # flag to indicate if the worker is currently calculating π
 
     def send_cpu_status(self):
-        cpu_status = get_cpu_status()
-        self.connection.send(json.dumps(('cpu_status', [cpu_status], {})))
+        cpu_status = get_cpu_status() # get CPU status from monitor_lib
+        self.connection.send(json.dumps(('cpu_status', [cpu_status], {}))) # send CPU status to server
 
     def handle_server_messages(self):
         try:
             while True:
-                msg = self.connection.recv()
-                func_name, args, kwargs = json.loads(msg)
+                msg = self.connection.recv() # receive message from server
+                func_name, _, _ = json.loads(msg) # decode message 
                 if func_name == 'get_cpu_status':
                     self.send_cpu_status()
                 elif func_name == 'calculate_pi':
                     if not self.calculating_pi:
-                        t = Thread(target=self.calculate_pi)
+                        t = Thread(target=self.calculate_pi) # thread to calculate π
                         t.daemon = True
                         t.start()
                     else:
