@@ -1,8 +1,8 @@
 hostname=$(hostname)
 
-# install pip3 and matplotlib in case they are not installed
 install_dependencies() {
     echo "Checking for pip3..."
+    # install pip3 and matplotlib in case they are not installed
     if ! command -v pip3 &> /dev/null; then
         echo "pip3 not found. Installing pip3..."
         sudo apt-get update
