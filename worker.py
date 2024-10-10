@@ -45,5 +45,5 @@ class Worker:
 
 if __name__ == '__main__':
     server_internal_ip = sys.argv[1] if len(sys.argv) > 1 else '10.128.0.2'
-    worker = Worker(('10.128.0.2', 17000), authkey=b'peekaboo')
+    worker = Worker((server_internal_ip, 17000), authkey=b'peekaboo')
     worker.start()

@@ -32,7 +32,7 @@ if [[ $hostname == *"server"* ]]; then
     install_dependencies
     python3 server.py "$ip_address" "$load_balancing_algorithm" # run the server script with arguments
 elif [[ $hostname == *"worker"* ]]; then
-    python3 worker.py # execute the worker script
+    python3 worker.py "$ip_address" # execute the worker script
 else
     echo "Error: VM's name does not contain 'server' or 'worker'"
     exit 1
