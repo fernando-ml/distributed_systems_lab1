@@ -162,11 +162,11 @@ class RPCHandler:
         sys.exit(0)
 
 def rpc_server(handler, address, authkey):
-    sock = Listener(address, authkey=authkey)
+    sock = Listener(address, authkey=authkey) # create a socket
     while True:
-        client = sock.accept()
-        worker = handler.register_worker(client)
-        t = Thread(target=handler.handle_connection, args=(worker,))
+        client = sock.accept() # accept a connection
+        worker = handler.register_worker(client) # register the worker
+        t = Thread(target=handler.handle_connection, args=(worker,)) # create a thread to handle the connection
         t.daemon = True
         t.start()
 
@@ -174,16 +174,15 @@ if __name__ == '__main__':
     load_balancing_algorithm = sys.argv[1] if len(sys.argv) > 1 else 'weighted_lb'
     handler = RPCHandler(load_balancing_algorithm=load_balancing_algorithm)
 
-    monitor_thread = Thread(target=handler.monitor_workers)  # Thread to monitor CPU usage
+    monitor_thread = Thread(target=handler.monitor_workers) # thread to monitor CPU usage
     monitor_thread.daemon = True
     monitor_thread.start()
 
-    assign_thread = Thread(target=handler.assign_tasks)  # Thread to assign jobs
+    assign_thread = Thread(target=handler.assign_tasks) # thread to assign jobs
     assign_thread.daemon = True
     assign_thread.start()
 
-    completion_thread = Thread(target=handler.monitor_completion)
+    completion_thread = Thread(target=handler.monitor_completion) # thread to monitor job completions
     completion_thread.start()
 
-    # Run the server
-    rpc_server(handler, ('10.128.0.2', 17000), authkey=b'peekaboo')
+    rpc_server(handler, ('10.128.0.2', 17000), authkey=b'peekaboo') # Run the server
