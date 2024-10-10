@@ -1,5 +1,12 @@
 hostname=$(hostname)
 
+default_ip="10.128.0.2"
+default_algorithm="weighted_lb"
+
+# get command line arguments or use defaults
+ip_address=${1:-$default_ip}
+load_balancing_algorithm=${2:-$default_algorithm}
+
 install_dependencies() {
     echo "Checking for pip3..."
     # install pip3 and matplotlib in case they are not installed
@@ -23,7 +30,7 @@ install_dependencies() {
 # verify if the hostname contains "server" or "worker"
 if [[ $hostname == *"server"* ]]; then
     install_dependencies
-    python3 server.py # run the server script
+    python3 server.py "$ip_address" "$load_balancing_algorithm" # run the server script with arguments
 elif [[ $hostname == *"worker"* ]]; then
     python3 worker.py # execute the worker script
 else

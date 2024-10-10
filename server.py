@@ -5,20 +5,20 @@ from multiprocessing.connection import Listener
 from threading import Thread, Lock
 import time
 import sys
-from plot_utils import generate_plots # Import the generate_plots function
+from plot_utils import generate_plots # import the generate_plots function
 
 class WorkerInfo:
     def __init__(self, conn, worker_id):
         self.conn = conn
         self.id = worker_id
         self.cpu_usage = None
-        self.lock = Lock()
+        # self.lock = Lock()
 
 class RPCHandler:
     def __init__(self, load_balancing_algorithm='weighted_lb'):
         self.workers = {}  # Stores WorkerInfo objects with worker_id as key
         self.worker_id_counter = 0  # Helps keep track of total number of workers
-        self.worker_lock = Lock()  # Synchronizes access to workers
+        self.worker_lock = Lock()  # Synchronizes access to workers and manage them independently
         self.job_counter, self.worker_index = 0, 0  # Keep track of total jobs assigned and worker index for round-robin assignment
         self.load_balancing_algorithm = load_balancing_algorithm  # Load balancing algorithm
         self.job_assignments = []  # List to store job assignment logs
@@ -28,22 +28,22 @@ class RPCHandler:
 
     def register_worker(self, connection):
         with self.worker_lock:
-            worker_id = self.worker_id_counter  # Assign a unique worker ID
+            worker_id = self.worker_id_counter  # assign a unique worker ID
             self.worker_id_counter += 1
             worker = WorkerInfo(connection, worker_id)  # Create a new WorkerInfo object
-            self.workers[worker_id] = worker  # Add worker to the workers dictionary
+            self.workers[worker_id] = worker  # add worker to the workers dictionary
         print(f"Registered new worker with id {worker_id}")
         return worker
 
     def handle_connection(self, worker):
-        conn = worker.conn  # Get the connection object from the worker
+        conn = worker.conn  # get the connection object from the worker
         try:
             while True:
                 msg = conn.recv()  # receive a message from the worker
-                func_name, args, _ = json.loads(msg)  # Decode the message
+                func_name, args, _ = json.loads(msg)  # decode the message
                 # deal with different functions
                 if func_name == 'cpu_status':
-                    with worker.lock:  # Lock the worker to prevent race conditions
+                    with worker.lock:  # lock the worker to prevent race conditions
                         worker.cpu_usage = args[0]  # Update the worker's CPU usage
                     lavg_1 = worker.cpu_usage['lavg_1']
                     print(f"Received CPU usage from worker {worker.id}: AVG CPU Usage in the last minute = {lavg_1}")
@@ -137,10 +137,7 @@ class RPCHandler:
                 return False
             available_workers = list(self.workers.values())
             # Select the worker with the lowest CPU usage
-            selected_worker = min(
-                available_workers,
-                key=lambda w: float(w.cpu_usage['lavg_1']) if w.cpu_usage else float('inf')
-            )
+            selected_worker = min(available_workers, key=lambda w: float(w.cpu_usage['lavg_1']) if w.cpu_usage else float('inf'))
             self.job_counter += 1
             self.assign_compute_pi(selected_worker, self.job_counter)
             return True
@@ -148,7 +145,7 @@ class RPCHandler:
     def monitor_completion(self):
         total_jobs = 20
         while len(self.job_completions) < total_jobs:
-            time.sleep(5)  # Wait for job completions
+            time.sleep(5)  # wait for job completions
         print("All jobs completed.")
         # save and update log files
         with open(self.assignment_log_filename, 'w') as f:
@@ -158,7 +155,7 @@ class RPCHandler:
         print(f"Logs saved to {self.assignment_log_filename} and {self.completion_log_filename}.")
         # Generate plots
         generate_plots(self.job_assignments, self.job_completions, self.load_balancing_algorithm)
-        # Exit the program
+        # Exit the program after generating the plots
         sys.exit(0)
 
 def rpc_server(handler, address, authkey):
@@ -171,7 +168,9 @@ def rpc_server(handler, address, authkey):
         t.start()
 
 if __name__ == '__main__':
-    load_balancing_algorithm = sys.argv[1] if len(sys.argv) > 1 else 'weighted_lb'
+    server_internal_ip = sys.argv[1] if len(sys.argv) > 1 else '10.128.0.2'
+    load_balancing_algorithm = sys.argv[2] if len(sys.argv) > 2 else 'weighted_lb'
+
     handler = RPCHandler(load_balancing_algorithm=load_balancing_algorithm)
 
     monitor_thread = Thread(target=handler.monitor_workers) # thread to monitor CPU usage
@@ -185,4 +184,4 @@ if __name__ == '__main__':
     completion_thread = Thread(target=handler.monitor_completion) # thread to monitor job completions
     completion_thread.start()
 
-    rpc_server(handler, ('10.128.0.2', 17000), authkey=b'peekaboo') # Run the server
+    rpc_server(handler, (server_internal_ip, 17000), authkey=b'peekaboo') # run the server
