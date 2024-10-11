@@ -2,7 +2,7 @@ def calculate_pi_leibniz():
     import random
     from time import perf_counter
     # generate a random number of terms so that the pi calculation can take a variable amount of time
-    n_terms = random.randint(7_000_000, 25_000_000)
+    n_terms = random.randint(15_000_000, 35_000_000)
     print(f"Number of terms: {n_terms}")
 
     pi_approx = 0  # initialize the variable to store the approximation
