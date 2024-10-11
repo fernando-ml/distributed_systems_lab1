@@ -1,3 +1,4 @@
+import sys
 import json
 from threading import Thread
 from multiprocessing.connection import Client
@@ -8,46 +9,42 @@ import time
 class Worker:
     def __init__(self, address, authkey):
         self.connection = Client(address, authkey=authkey)
-        self.job_progress = 0
-        self.calculating_pi = False # flag to indicate if the worker is currently calculating π
 
     def send_cpu_status(self):
-        cpu_status = get_cpu_status() # get CPU status from monitor_lib
-        self.connection.send(json.dumps(('cpu_status', [cpu_status], {}))) # send CPU status to server
+        cpu_status = get_cpu_status()  # get CPU status from monitor_lib
+        self.connection.send(json.dumps(('cpu_status', [cpu_status], {})))  # send CPU status to server
 
     def handle_server_messages(self):
         try:
             while True:
-                msg = self.connection.recv() # receive message from server
-                func_name, _, _ = json.loads(msg) # decode message 
+                msg = self.connection.recv()  # receive message from server
+                func_name, args, _ = json.loads(msg)  # decode message
                 if func_name == 'get_cpu_status':
                     self.send_cpu_status()
                 elif func_name == 'calculate_pi':
-                    if not self.calculating_pi:
-                        t = Thread(target=self.calculate_pi) # thread to calculate π
-                        t.daemon = True
-                        t.start()
-                    else:
-                        print("Already calculating π.")
+                    job_id = args[0]  # get the job ID
+                    t = Thread(target=self.calculate_pi, args=(job_id,))  # create a thread to calculate π
+                    t.daemon = True
+                    t.start()
                 else:
                     print(f"Unknown function {func_name}")
         except EOFError:
             print("Disconnected from server.")
             pass
 
-    def calculate_pi(self):
-        self.calculating_pi = True
+    def calculate_pi(self, job_id):
         result = calculate_pi_leibniz()
-        self.connection.send(json.dumps(('pi_result', [result], {})))
-        self.calculating_pi = False
+        self.connection.send(json.dumps(('pi_result', [job_id, result], {})))
+
+    def start(self):
+        t = Thread(target=self.handle_server_messages)  # thread to handle messages from the server
+        t.daemon = True
+        t.start()
+        print("Worker started.")
+        while True:  # keep the main thread running
+            time.sleep(1)
 
 if __name__ == '__main__':
-    worker = Worker(('10.128.0.2', 17000), authkey=b'peekaboo')
-
-    
-    t = Thread(target=worker.handle_server_messages) #  thread to handle messages from the server
-    t.daemon = True
-    t.start()
-
-    while True: # to keep the main thread running
-        time.sleep(1)
+    server_internal_ip = sys.argv[1] if len(sys.argv) > 1 else '10.128.0.2'
+    worker = Worker((server_internal_ip, 17000), authkey=b'peekaboo')
+    worker.start()

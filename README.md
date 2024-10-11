@@ -2,6 +2,10 @@
 
 This repository contains the code for Distributed Systems Lab1, implementing a simple distributed system with a server and multiple workers.
 
+# Students
+- Fernando Martinez
+- Panayiotis Christou
+
 ## Prerequisites
 
 - Python 3.x
@@ -11,18 +15,25 @@ This repository contains the code for Distributed Systems Lab1, implementing a s
 
 1. Clone the repository:
 
-```git clone https://github.com/fernando-ml/distributed_systems_lab1.git -b main```
+```sh
+git clone https://github.com/fernando-ml/distributed_systems_lab1.git -b main
+```
 
 2. Navigate to the project directory:
 
-```cd distributed_systems_lab1```
+```sh
+cd distributed_systems_lab1
+```
 
 ## Usage
 
 To run the distributed system, execute the `start_lab1.sh` script in your terminal:
 
+```sh
+bash start_lab1.sh "{your server's internal IP address}" "{load balancing technique you want to utilize}"
+```
 
-```bash start_lab1.sh```
+Load balancing techniques supported are `weighted_lb` and `round_robin_lb`.
 
 ### Important Naming Convention
 
@@ -44,8 +55,21 @@ The `start_lab1.sh` script does the following:
 
 ## Dependencies
 
-All required libraries are built-in Python modules. No additional installations are necessary.
+All required libraries are built-in Python modules, except for `matplotlib`, which will be installed automatically if missing for the server.
 
 ## Troubleshooting
 
 If you encounter the error "_**VM's name does not contain 'server' or 'worker'**_", ensure that your VM names follow the naming convention described above.
+
+## Output Files
+
+The system generates graphs that are saved as PNG images. To download the generated graphs, you can use the following paths:
+
+- `/home/{user}/distributed_systems_lab1/cpu_usage_distribution_weighted_lb.png`
+- `/home/{user}/distributed_systems_lab1/cpu_vs_duration_weighted_lb.png`
+- `/home/{user}/distributed_systems_lab1/job_durations_weighted_lb.png`
+- `/home/{user}/distributed_systems_lab1/cpu_usage_distribution_round_robin_lb.png`
+- `/home/{user}/distributed_systems_lab1/cpu_vs_duration_round_robin_lb.png`
+- `/home/{user}/distributed_systems_lab1/job_durations_round_robin_lb.png`
+
+Replace `{user}` with the username of the current machine.
