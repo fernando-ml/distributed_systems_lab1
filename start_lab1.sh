@@ -30,8 +30,10 @@ install_dependencies() {
 # verify if the hostname contains "server" or "worker"
 if [[ $hostname == *"server"* ]]; then
     install_dependencies
+    echo "Starting server..."
     python3 server.py "$ip_address" "$load_balancing_algorithm" # run the server script with arguments
 elif [[ $hostname == *"worker"* ]]; then
+    echo "Starting worker..."
     python3 worker.py "$ip_address" # execute the worker script
 else
     echo "Error: VM's name does not contain 'server' or 'worker'"

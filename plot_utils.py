@@ -80,4 +80,3 @@ def generate_plots(job_assignments, job_completions, load_balancing_algorithm):
     plt.title(f'Distribution of CPU Usage at Assignment ({load_balancing_algorithm})')
     plt.savefig(f'cpu_usage_distribution_{load_balancing_algorithm}.png')
     plt.close()
-    print(f"Additional plot saved as 'cpu_usage_distribution_{load_balancing_algorithm}.png'.")

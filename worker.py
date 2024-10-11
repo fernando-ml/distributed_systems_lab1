@@ -23,7 +23,7 @@ class Worker:
                     self.send_cpu_status()
                 elif func_name == 'calculate_pi':
                     job_id = args[0]  # get the job ID
-                    t = Thread(target=self.calculate_pi, args=(job_id,))
+                    t = Thread(target=self.calculate_pi, args=(job_id,))  # create a thread to calculate π
                     t.daemon = True
                     t.start()
                 else:
@@ -40,6 +40,7 @@ class Worker:
         t = Thread(target=self.handle_server_messages)  # thread to handle messages from the server
         t.daemon = True
         t.start()
+        print("Worker started.")
         while True:  # keep the main thread running
             time.sleep(1)
 

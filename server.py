@@ -136,7 +136,7 @@ class RPCHandler:
                 print("No workers connected.")
                 return False
             available_workers = list(self.workers.values())
-            # Select the worker with the lowest CPU usage
+            # select the worker with the lowest CPU usage
             selected_worker = min(available_workers, key=lambda w: float(w.cpu_usage['lavg_1']) if w.cpu_usage else float('inf'))
             self.job_counter += 1
             self.assign_compute_pi(selected_worker, self.job_counter)
@@ -155,7 +155,7 @@ class RPCHandler:
         print(f"Logs saved to {self.assignment_log_filename} and {self.completion_log_filename}.")
         # Generate plots
         generate_plots(self.job_assignments, self.job_completions, self.load_balancing_algorithm)
-        # Exit the program after generating the plots
+        print("Plots generated.")
         sys.exit(0)
 
 def rpc_server(handler, address, authkey):

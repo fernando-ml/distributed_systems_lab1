@@ -14,11 +14,5 @@ def get_cpu_status(path='/proc/loadavg'):
     return loadavg
 
 def calculate_percentage(load, cpu_count):
-    usage_percentage = (load / cpu_count) * 100
-    return min(usage_percentage, 100)  # cap at 100%
-
-# Example usage
-cpu_status = get_cpu_status()
-print(f"1-minute load average: {cpu_status['lavg_1']:.2f}%")
-print(f"5-minute load average: {cpu_status['lavg_5']:.2f}%")
-print(f"15-minute load average: {cpu_status['lavg_15']:.2f}%")
+    usage_percentage = (load / cpu_count)
+    return min(usage_percentage, 1.00)  # cap at 100%
