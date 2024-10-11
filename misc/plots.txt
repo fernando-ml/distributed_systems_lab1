@@ -1,0 +1,8 @@
+directories to download plots
+
+/home/femartinez/distributed_systems_lab1/cpu_usage_distribution_weighted_lb.png
+/home/femartinez/distributed_systems_lab1/cpu_vs_duration_weighted_lb.png
+/home/femartinez/distributed_systems_lab1/job_durations_weighted_lb.png
+/home/femartinez/distributed_systems_lab1/cpu_usage_distribution_round_robin_lb.png
+/home/femartinez/distributed_systems_lab1/cpu_vs_duration_round_robin_lb.png
+/home/femartinez/distributed_systems_lab1/job_durations_round_robin_lb.png
