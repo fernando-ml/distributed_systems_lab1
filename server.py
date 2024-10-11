@@ -98,13 +98,13 @@ class RPCHandler:
                 workers = list(self.workers.values())
             for worker in workers:
                 self.request_cpu_status(worker)
-            time.sleep(5)  # Monitor worker CPU status every 5 seconds
+            time.sleep(3)  # Monitor worker CPU status every 5 seconds
 
     def assign_tasks(self):
         total_jobs = 20  # total number of jobs to assign
         jobs_assigned = 0 # counter of number of jobs assigned so far
         while jobs_assigned < total_jobs:
-            time.sleep(5)  # wait 5 seconds between job assignments
+            time.sleep(10)  # wait 10 seconds between job assignments
             if self.load_balancing_algorithm == 'round_robin_lb':
                 assigned = self.assign_job_round_robin() 
             elif self.load_balancing_algorithm == 'weighted_lb':
