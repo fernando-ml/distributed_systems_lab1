@@ -12,7 +12,7 @@ class WorkerInfo:
         self.conn = conn
         self.id = worker_id
         self.cpu_usage = None
-        # self.lock = Lock()
+        self.lock = Lock()
 
 class RPCHandler:
     def __init__(self, load_balancing_algorithm='weighted_lb'):
