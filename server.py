@@ -4,6 +4,7 @@ import json
 from multiprocessing.connection import Listener
 from threading import Thread, Lock
 import time
+import os
 import sys
 from plot_utils import generate_plots # import the generate_plots function
 
@@ -145,7 +146,7 @@ class RPCHandler:
     def monitor_completion(self):
         total_jobs = 20
         while len(self.job_completions) < total_jobs:
-            time.sleep(5)  # wait for job completions
+            time.sleep(10)  # wait for job completions
         print("All jobs completed.")
         # save and update log files
         with open(self.assignment_log_filename, 'w') as f:
@@ -156,7 +157,7 @@ class RPCHandler:
         # Generate plots
         generate_plots(self.job_assignments, self.job_completions, self.load_balancing_algorithm)
         print("Plots generated.")
-        sys.exit(0)
+        os._exit(0) # stop server after finishing jobs
 
 def rpc_server(handler, address, authkey):
     sock = Listener(address, authkey=authkey) # create a socket
