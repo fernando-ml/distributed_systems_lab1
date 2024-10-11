@@ -35,6 +35,8 @@ bash start_lab1.sh "{your server's internal IP address}" "{load balancing techni
 
 Load balancing techniques supported are `weighted_lb` and `round_robin_lb`.
 
+By default, the bash file takes ours (`default_ip="10.128.0.2"`, `default_algorithm="weighted_lb"`).
+
 ### Important Naming Convention
 
 - Name your manager virtual machine (VM) with "server" in its name (e.g., "server", "main_server").
