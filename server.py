@@ -154,7 +154,7 @@ class RPCHandler:
         with open(self.completion_log_filename, 'w') as f:
             json.dump(self.job_completions, f)
         print(f"Logs saved to {self.assignment_log_filename} and {self.completion_log_filename}.")
-        # Generate plots
+        # generate plots
         generate_plots(self.job_assignments, self.job_completions, self.load_balancing_algorithm)
         print("Plots generated.")
         end_time = perf_counter()

@@ -2,14 +2,14 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
 def generate_plots(job_assignments, job_completions, load_balancing_algorithm):
-    # Merge assignment and completion logs
+    # merge assignment and completion logs
     jobs = []
     for assignment in job_assignments:
         job_id = assignment['job_id']
         worker_id = assignment['worker_id']
         time_assigned = assignment['time_assigned']
         cpu_usage = assignment['cpu_usage']
-        # Find the completion for this job
+        # find the completion for this job
         completion = next((comp for comp in job_completions if comp['job_id'] == job_id), None)
         if completion:
             time_completed = completion['time_completed']
@@ -25,13 +25,12 @@ def generate_plots(job_assignments, job_completions, load_balancing_algorithm):
             'duration': duration,
             'cpu_usage': cpu_usage
         })
-    # Generate plots
-    # Job Durations per Worker
+    
     job_ids = [job['job_id'] for job in jobs]
     durations = [job['duration'] for job in jobs]
     worker_ids = [job['worker_id'] for job in jobs]
 
-    # Assign a color to each worker
+    # assign a color to each worker
     worker_list = list(set(worker_ids))
     worker_colors = {}
     color_palette = ['blue', 'green', 'red', 'purple', 'orange', 'brown', 'pink', 'gray', 'olive', 'cyan']
