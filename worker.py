@@ -1,3 +1,4 @@
+import os
 import sys
 import json
 from threading import Thread
@@ -30,6 +31,7 @@ class Worker:
                     print(f"Unknown function {func_name}")
         except EOFError:
             print("Disconnected from server.")
+            os._exit(0)
             pass
 
     def calculate_pi(self, job_id):
