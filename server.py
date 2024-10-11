@@ -1,5 +1,3 @@
-# server.py
-
 import json
 from multiprocessing.connection import Listener
 from threading import Thread, Lock
@@ -7,6 +5,7 @@ import time
 import os
 import sys
 from plot_utils import generate_plots # import the generate_plots function
+from time import perf_counter
 
 class WorkerInfo:
     def __init__(self, conn, worker_id):
@@ -26,6 +25,7 @@ class RPCHandler:
         self.job_completions = []  # List to store job completion logs
         self.assignment_log_filename = f"assignment_log_{self.load_balancing_algorithm}.json"
         self.completion_log_filename = f"completion_log_{self.load_balancing_algorithm}.json"
+        self.starting_time = perf_counter()
 
     def register_worker(self, connection):
         with self.worker_lock:
@@ -157,6 +157,8 @@ class RPCHandler:
         # Generate plots
         generate_plots(self.job_assignments, self.job_completions, self.load_balancing_algorithm)
         print("Plots generated.")
+        end_time = perf_counter()
+        print(f"Total time taken: {end_time - self.starting_time:.2f} seconds")
         os._exit(0) # stop server after finishing jobs
 
 def rpc_server(handler, address, authkey):
@@ -183,6 +185,6 @@ if __name__ == '__main__':
     assign_thread.start()
 
     completion_thread = Thread(target=handler.monitor_completion) # thread to monitor job completions
-    completion_thread.start()
+    completion_thread.start() # not daemon because it needs to run until all jobs are completed
 
     rpc_server(handler, (server_internal_ip, 17000), authkey=b'peekaboo') # run the server
